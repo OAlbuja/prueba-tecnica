@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Gestión de Productos</title>
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 8px;
+        }
+
+        button {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Gestión de Productos</h1>
+
+    <h2>Agregar Producto</h2>
+    <input type="text" id="nombre" placeholder="Nombre">
+    <input type="text" id="descripcion" placeholder="Descripción">
+    <input type="number" id="precio" placeholder="Precio">
+    <input type="number" id="stock" placeholder="Stock">
+    <button onclick="agregarProducto()">Agregar</button>
+
+    <h2>Lista de Productos</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-productos">
+        </tbody>
+    </table>
+
+    <script>
+        const api = 'http://localhost:3000/productos';
+
+        function cargarProductos() {
+            fetch(api)
+                .then(res => res.json())
+                .then(data => {
+                    const tabla = document.getElementById('tabla-productos');
+                    tabla.innerHTML = '';
+                    data.forEach(p => {
+                        tabla.innerHTML += `
+              <tr>
+                <td>${p.id}</td>
+                <td>${p.nombre}</td>
+                <td>${p.descripcion}</td>
+                <td>${p.precio}</td>
+                <td>${p.stock}</td>
+                <td>
+                  <button onclick="borrarProducto(${p.id})">Eliminar</button>
+                  <button onclick="editarProducto(${p.id}, '${p.nombre}', '${p.descripcion}', ${p.precio}, ${p.stock})">Editar</button>
+                </td>
+              </tr>
+            `;
+                    });
+                });
+        }
+
+        function agregarProducto() {
+            const nombreInput = document.getElementById('nombre');
+            const descripcionInput = document.getElementById('descripcion');
+            const precioInput = document.getElementById('precio');
+            const stockInput = document.getElementById('stock');
+
+            const nombre = nombreInput.value;
+            const descripcion = descripcionInput.value;
+            const precio = parseFloat(precioInput.value);
+            const stock = parseInt(stockInput.value);
+
+            fetch(api, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, descripcion, precio, stock })
+            })
+                .then(() => {
+                    alert('Producto agregado!');
+                    // Limpiar campos
+                    nombreInput.value = '';
+                    descripcionInput.value = '';
+                    precioInput.value = '';
+                    stockInput.value = '';
+                    cargarProductos();
+                });
+        }
+
+
+        function editarProducto(id, nombre, descripcion, precio, stock) {
+            const nuevoNombre = prompt('Nuevo nombre:', nombre);
+            const nuevaDescripcion = prompt('Nueva descripción:', descripcion);
+            const nuevoPrecio = parseFloat(prompt('Nuevo precio:', precio));
+            const nuevoStock = parseInt(prompt('Nuevo stock:', stock));
+
+            fetch(`${api}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre: nuevoNombre, descripcion: nuevaDescripcion, precio: nuevoPrecio, stock: nuevoStock })
+            })
+                .then(() => {
+                    alert('Producto actualizado!');
+                    cargarProductos();
+                });
+        }
+
+        function borrarProducto(id) {
+            fetch(`${api}/${id}`, {
+                method: 'DELETE'
+            })
+                .then(() => {
+                    alert('Producto eliminado!');
+                    cargarProductos();
+                });
+        }
+
+
+        cargarProductos();
+    </script>
+</body>
+
+</html>
